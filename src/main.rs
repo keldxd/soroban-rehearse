@@ -17,6 +17,8 @@ fn main() -> Result<()> {
             args.get(2)
                 .context("usage: diagnose <tx hash or its start>")?,
         ),
-        _ => bail!("usage: soroban-rehearse fetch | inspect | replay | diagnose <tx hash>"),
+        _ => bail!(
+            "usage: soroban-rehearse fetch | inspect | replay [new.wasm] | diagnose <tx hash>"
+        ),
     }
 }

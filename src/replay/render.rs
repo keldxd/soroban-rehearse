@@ -1,6 +1,8 @@
 use crate::common::key_kind;
 use soroban_sdk::testutils::{AuthorizedFunction, AuthorizedInvocation};
-use soroban_sdk::xdr::{ContractEvent, ContractEventBody, LedgerEntryData, LedgerKey, ScAddress, ScVal};
+use soroban_sdk::xdr::{
+    ContractEvent, ContractEventBody, LedgerEntryData, LedgerKey, ScAddress, ScVal,
+};
 use soroban_sdk::{Env, TryFromVal, Val};
 
 /// Shortens long text so the output stays readable.
@@ -44,16 +46,25 @@ pub fn sv(v: &ScVal) -> String {
         ScVal::String(s) => format!("\"{}\"", s.0.to_utf8_string_lossy()),
         ScVal::Address(a) => abbrev(&a.to_string()),
         ScVal::Bytes(b) => format!("0x{}", hex(b.0.as_slice())),
-        ScVal::Vec(Some(items)) => format!("[{}]", items.0.iter().map(sv).collect::<Vec<_>>().join(", ")),
+        ScVal::Vec(Some(items)) => format!(
+            "[{}]",
+            items.0.iter().map(sv).collect::<Vec<_>>().join(", ")
+        ),
         ScVal::Map(Some(m)) => format!(
             "{{{}}}",
-            m.0.iter().map(|e| format!("{}: {}", sv(&e.key), sv(&e.val))).collect::<Vec<_>>().join(", ")
+            m.0.iter()
+                .map(|e| format!("{}: {}", sv(&e.key), sv(&e.val)))
+                .collect::<Vec<_>>()
+                .join(", ")
         ),
         ScVal::LedgerKeyContractInstance => "instance".to_string(),
         ScVal::ContractInstance(i) => match &i.storage {
             Some(m) => format!(
                 "instance storage {{{}}}",
-                m.0.iter().map(|e| format!("{}: {}", sv(&e.key), sv(&e.val))).collect::<Vec<_>>().join(", ")
+                m.0.iter()
+                    .map(|e| format!("{}: {}", sv(&e.key), sv(&e.val)))
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ),
             None => "instance (no storage)".to_string(),
         },
@@ -65,7 +76,12 @@ pub fn sv(v: &ScVal) -> String {
 pub fn describe_key(k: &LedgerKey) -> String {
     match k {
         LedgerKey::ContractData(d) => short(
-            format!("{} {:?} {}", abbrev(&d.contract.to_string()), d.durability, sv(&d.key)),
+            format!(
+                "{} {:?} {}",
+                abbrev(&d.contract.to_string()),
+                d.durability,
+                sv(&d.key)
+            ),
             220,
         ),
         LedgerKey::ContractCode(c) => format!("contract code {}", hex(&c.hash.0)),
@@ -92,7 +108,10 @@ pub fn event(e: &ContractEvent) -> String {
         .unwrap_or_else(|| "?".to_string());
     let ContractEventBody::V0(b) = &e.body;
     let topics: Vec<String> = b.topics.iter().map(sv).collect();
-    short(format!("{who} [{}] {}", topics.join(", "), sv(&b.data)), 400)
+    short(
+        format!("{who} [{}] {}", topics.join(", "), sv(&b.data)),
+        400,
+    )
 }
 
 /// One authorization a call required.
@@ -118,7 +137,9 @@ fn text<T>(env: &Env, v: &T) -> String
 where
     Val: TryFromVal<Env, T>,
 {
-    to_sc(env, v).map(|s| sv(&s)).unwrap_or_else(|| "?".to_string())
+    to_sc(env, v)
+        .map(|s| sv(&s))
+        .unwrap_or_else(|| "?".to_string())
 }
 
 /// (contract.function, full text) of one authorized invocation and its sub-calls.
@@ -138,7 +159,11 @@ fn invocation(env: &Env, inv: &AuthorizedInvocation) -> (String, String) {
     if inv.sub_invocations.is_empty() {
         (call, main)
     } else {
-        let subs: Vec<String> = inv.sub_invocations.iter().map(|s| invocation(env, s).1).collect();
+        let subs: Vec<String> = inv
+            .sub_invocations
+            .iter()
+            .map(|s| invocation(env, s).1)
+            .collect();
         (call, format!("{main} > {{{}}}", subs.join(" + ")))
     }
 }
@@ -150,7 +175,46 @@ pub fn auth_list(env: &Env) -> Vec<Auth> {
         .map(|(who, inv)| {
             let (call, full) = invocation(env, inv);
             let signer = text(env, who);
-            Auth { full: short(format!("{signer} authorizes {full}"), 400), signer, call }
+            Auth {
+                full: short(format!("{signer} authorizes {full}"), 400),
+                signer,
+                call,
+            }
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use soroban_sdk::xdr::Int128Parts;
+
+    #[test]
+    fn i128_values_print_as_numbers() {
+        assert_eq!(
+            sv(&ScVal::I128(Int128Parts {
+                hi: -1,
+                lo: u64::MAX
+            })),
+            "-1"
+        );
+        assert_eq!(
+            sv(&ScVal::I128(Int128Parts { hi: 1, lo: 0 })),
+            "18446744073709551616"
+        );
+    }
+
+    #[test]
+    fn long_addresses_are_shortened() {
+        assert_eq!(
+            abbrev("CBAKAZUEJBAFA2DCGBRS2WKJT3FNIMJBHTFL76AY7XMAVEINQNNIQWAO"),
+            "CBAKAZ..QWAO"
+        );
+    }
+
+    #[test]
+    fn helpers() {
+        assert_eq!(short("abcdef".to_string(), 3), "abc ...");
+        assert_eq!(hex(&[0, 255, 16]), "00ff10");
+    }
 }

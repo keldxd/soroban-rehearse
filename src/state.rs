@@ -1,7 +1,9 @@
-use crate::common::{client, decode, encode, rpc, DecodedTx, ENTRIES_CACHE};
+use crate::common::{DecodedTx, ENTRIES_CACHE, client, decode, encode, rpc};
 use anyhow::{Context, Result};
-use serde_json::{json, Value};
-use soroban_sdk::xdr::{LedgerEntry, LedgerEntryChange, LedgerEntryData, LedgerEntryExt, LedgerKey};
+use serde_json::{Value, json};
+use soroban_sdk::xdr::{
+    LedgerEntry, LedgerEntryChange, LedgerEntryData, LedgerEntryExt, LedgerKey,
+};
 use std::collections::{BTreeMap, BTreeSet};
 use std::{fs, path::Path, thread, time::Duration};
 
@@ -23,7 +25,10 @@ pub fn current_entries(txs: &[DecodedTx]) -> Result<BTreeMap<LedgerKey, CurrentE
             keys.extend(t.read_write.iter().cloned());
         }
         let encoded: Vec<String> = keys.iter().map(encode).collect::<Result<_>>()?;
-        println!("downloading current state of {} ledger entries...", encoded.len());
+        println!(
+            "downloading current state of {} ledger entries...",
+            encoded.len()
+        );
         let client = client()?;
         let mut all = Vec::new();
         for chunk in encoded.chunks(200) {
@@ -46,7 +51,11 @@ pub fn current_entries(txs: &[DecodedTx]) -> Result<BTreeMap<LedgerKey, CurrentE
         out.insert(
             key,
             CurrentEntry {
-                entry: LedgerEntry { last_modified_ledger_seq: last_modified, data, ext: LedgerEntryExt::V0 },
+                entry: LedgerEntry {
+                    last_modified_ledger_seq: last_modified,
+                    data,
+                    ext: LedgerEntryExt::V0,
+                },
                 live_until,
             },
         );
@@ -63,13 +72,18 @@ pub struct History {
 
 impl History {
     pub fn build(txs: &[DecodedTx]) -> History {
-        let mut by_key: BTreeMap<LedgerKey, Vec<(u64, bool, Option<LedgerEntry>)>> = BTreeMap::new();
+        let mut by_key: BTreeMap<LedgerKey, Vec<(u64, bool, Option<LedgerEntry>)>> =
+            BTreeMap::new();
         for t in txs {
             let p = t.pos();
             for c in &t.changes {
                 let (k, after, v) = match c {
-                    LedgerEntryChange::State(e) | LedgerEntryChange::Restored(e) => (e.to_key(), false, Some(e.clone())),
-                    LedgerEntryChange::Updated(e) | LedgerEntryChange::Created(e) => (e.to_key(), true, Some(e.clone())),
+                    LedgerEntryChange::State(e) | LedgerEntryChange::Restored(e) => {
+                        (e.to_key(), false, Some(e.clone()))
+                    }
+                    LedgerEntryChange::Updated(e) | LedgerEntryChange::Created(e) => {
+                        (e.to_key(), true, Some(e.clone()))
+                    }
                     LedgerEntryChange::Removed(k) => (k.clone(), true, None),
                 };
                 by_key.entry(k).or_default().push((p, after, v));
@@ -83,10 +97,20 @@ impl History {
     /// Outer None = no record at all; inner None = the entry did not exist.
     pub fn value_at(&self, k: &LedgerKey, p: u64) -> Option<Option<LedgerEntry>> {
         let recs = self.by_key.get(k)?;
-        let before = recs.iter().filter(|(q, after, _)| *after && *q < p).max_by_key(|(q, _, _)| *q);
-        let later = recs.iter().filter(|(q, after, _)| !*after && *q > p).min_by_key(|(q, _, _)| *q);
+        let before = recs
+            .iter()
+            .filter(|(q, after, _)| *after && *q < p)
+            .max_by_key(|(q, _, _)| *q);
+        let later = recs
+            .iter()
+            .filter(|(q, after, _)| !*after && *q > p)
+            .min_by_key(|(q, _, _)| *q);
         match (before, later) {
-            (Some(b), Some(a)) => Some(if p - b.0 <= a.0 - p { b.2.clone() } else { a.2.clone() }),
+            (Some(b), Some(a)) => Some(if p - b.0 <= a.0 - p {
+                b.2.clone()
+            } else {
+                a.2.clone()
+            }),
             (Some(b), None) => Some(b.2.clone()),
             (None, Some(a)) => Some(a.2.clone()),
             (None, None) => None,
@@ -164,7 +188,11 @@ pub fn state_before(
         };
         // Keep every Soroban entry alive for the replay
         let live_until = if has_ttl(&k) {
-            Some(cur.and_then(|c| c.live_until).unwrap_or(0).max(tx.ledger + 1_000_000))
+            Some(
+                cur.and_then(|c| c.live_until)
+                    .unwrap_or(0)
+                    .max(tx.ledger + 1_000_000),
+            )
         } else {
             None
         };
@@ -174,15 +202,21 @@ pub fn state_before(
 }
 
 /// What mainnet recorded as the final value of each read-write entry (None = removed / never existed).
-pub fn recorded_after(tx: &DecodedTx, input: &[(LedgerKey, LedgerEntry, Option<u32>)]) -> BTreeMap<LedgerKey, Option<LedgerEntryData>> {
+pub fn recorded_after(
+    tx: &DecodedTx,
+    input: &[(LedgerKey, LedgerEntry, Option<u32>)],
+) -> BTreeMap<LedgerKey, Option<LedgerEntryData>> {
     let mut out: BTreeMap<LedgerKey, Option<LedgerEntryData>> = BTreeMap::new();
-    let input_map: BTreeMap<&LedgerKey, &LedgerEntry> = input.iter().map(|(k, e, _)| (k, e)).collect();
+    let input_map: BTreeMap<&LedgerKey, &LedgerEntry> =
+        input.iter().map(|(k, e, _)| (k, e)).collect();
     for k in &tx.read_write {
         out.insert(k.clone(), input_map.get(k).map(|e| e.data.clone()));
     }
     for c in &tx.changes {
         match c {
-            LedgerEntryChange::Updated(e) | LedgerEntryChange::Created(e) | LedgerEntryChange::Restored(e) => {
+            LedgerEntryChange::Updated(e)
+            | LedgerEntryChange::Created(e)
+            | LedgerEntryChange::Restored(e) => {
                 let k = e.to_key();
                 if out.contains_key(&k) {
                     out.insert(k, Some(e.data.clone()));

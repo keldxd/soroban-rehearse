@@ -1,20 +1,22 @@
 pub mod compare;
 pub mod render;
 
-use crate::common::{load_txs, network_id, DecodedTx, CONTRACT, REPLAY_N};
-use crate::state::{current_entries, recorded_after, state_before, CurrentEntry, History, Sources};
-use anyhow::{anyhow, bail, Context, Result};
-use render::{auth_list, hex, Auth};
+use crate::common::{CONTRACT, DecodedTx, REPLAY_N, load_txs, network_id};
+use crate::state::{CurrentEntry, History, Sources, current_entries, recorded_after, state_before};
+use anyhow::{Context, Result, anyhow, bail};
+use render::{Auth, auth_list, hex};
 use soroban_ledger_snapshot::LedgerSnapshot;
 use soroban_sdk::testutils::{EnvTestConfig, Events};
 use soroban_sdk::xdr::{
-    ContractEvent, ContractEventBody, ContractExecutable, Hash, LedgerEntry, LedgerEntryData, LedgerKey,
-    LedgerKeyContractCode, ScVal,
+    ContractEvent, ContractEventBody, ContractExecutable, Hash, LedgerEntry, LedgerEntryData,
+    LedgerKey, LedgerKeyContractCode, ScVal,
 };
-use soroban_sdk::{Address, Env, Error as SorobanError, Symbol, TryFromVal, Val, Vec as SorobanVec};
+use soroban_sdk::{
+    Address, Env, Error as SorobanError, Symbol, TryFromVal, Val, Vec as SorobanVec,
+};
 use std::collections::BTreeMap;
 use std::fs;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 
 pub const DEPLOYED_WASM: &str = "cache/deployed.wasm";
 
@@ -34,7 +36,9 @@ pub struct Outcome {
 impl Outcome {
     /// The call touched a contract built for a newer protocol than our host supports.
     pub fn needs_newer_protocol(&self) -> bool {
-        self.diagnostics.iter().any(|d| d.contains("newer than host"))
+        self.diagnostics
+            .iter()
+            .any(|d| d.contains("newer than host"))
     }
 }
 
@@ -78,7 +82,11 @@ fn swap_code(entries: &mut [(LedgerKey, LedgerEntry, Option<u32>)], hash: [u8; 3
 
 /// Runs one real transaction's call on the given state in a fresh local Soroban host,
 /// optionally with new code for the target contract.
-pub fn run(tx: &DecodedTx, entries: &[(LedgerKey, LedgerEntry, Option<u32>)], upgrade: Option<&Upgrade>) -> Result<Outcome> {
+pub fn run(
+    tx: &DecodedTx,
+    entries: &[(LedgerKey, LedgerEntry, Option<u32>)],
+    upgrade: Option<&Upgrade>,
+) -> Result<Outcome> {
     let mut entries = entries.to_vec();
     if let Some(u) = upgrade {
         swap_code(&mut entries, u.hash);
@@ -100,7 +108,9 @@ pub fn run(tx: &DecodedTx, entries: &[(LedgerKey, LedgerEntry, Option<u32>)], up
             .collect(),
     };
     let mut env = Env::from_ledger_snapshot(snapshot);
-    env.set_config(EnvTestConfig { capture_snapshot_at_drop: false });
+    env.set_config(EnvTestConfig {
+        capture_snapshot_at_drop: false,
+    });
     // We compare behaviour, not fees: no CPU/memory budget limit during replay
     env.cost_estimate().budget().reset_unlimited();
     if let Some(u) = upgrade {
@@ -121,7 +131,11 @@ pub fn run(tx: &DecodedTx, entries: &[(LedgerKey, LedgerEntry, Option<u32>)], up
     let res = env.try_invoke_contract::<Val, SorobanError>(&addr, &func, args);
     let (ok, error, return_value) = match res {
         Ok(Ok(v)) => (true, None, ScVal::try_from_val(&env, &v).ok()),
-        Ok(Err(e)) => (true, Some(format!("return value conversion failed: {e:?}")), None),
+        Ok(Err(e)) => (
+            true,
+            Some(format!("return value conversion failed: {e:?}")),
+            None,
+        ),
         Err(Ok(e)) => (false, Some(format!("{e:?}")), None),
         Err(Err(e)) => (false, Some(format!("{e:?}")), None),
     };
@@ -136,7 +150,11 @@ pub fn run(tx: &DecodedTx, entries: &[(LedgerKey, LedgerEntry, Option<u32>)], up
                 .iter()
                 .filter_map(|he| {
                     let ContractEventBody::V0(b) = &he.event.body;
-                    let first = b.topics.first().map(|t| format!("{t:?}")).unwrap_or_default();
+                    let first = b
+                        .topics
+                        .first()
+                        .map(|t| format!("{t:?}"))
+                        .unwrap_or_default();
                     if first.contains("error") {
                         Some(format!("{:?} {:?}", b.topics, b.data))
                     } else {
@@ -154,7 +172,15 @@ pub fn run(tx: &DecodedTx, entries: &[(LedgerKey, LedgerEntry, Option<u32>)], up
         .map(|(k, (e, _))| (k.as_ref().clone(), e.data.clone()))
         .collect();
 
-    Ok(Outcome { ok, error, return_value, events, after, auths, diagnostics })
+    Ok(Outcome {
+        ok,
+        error,
+        return_value,
+        events,
+        after,
+        auths,
+        diagnostics,
+    })
 }
 
 /// Like `run`, but a panic inside the host becomes an error instead of stopping everything.
@@ -171,7 +197,10 @@ pub fn run_safely(
                 .cloned()
                 .or_else(|| payload.downcast_ref::<&str>().map(|s| s.to_string()))
                 .unwrap_or_else(|| "unknown panic".to_string());
-            Err(anyhow!("host panicked: {}", msg.lines().next().unwrap_or("")))
+            Err(anyhow!(
+                "host panicked: {}",
+                msg.lines().next().unwrap_or("")
+            ))
         }
     }
 }
@@ -179,7 +208,10 @@ pub fn run_safely(
 /// Loads the transactions, the current state and the history of values.
 pub fn prepare() -> Result<(Vec<DecodedTx>, BTreeMap<LedgerKey, CurrentEntry>, History)> {
     let (txs, skipped) = load_txs()?;
-    println!("loaded {} transactions as history (skipped: {skipped:?})", txs.len());
+    println!(
+        "loaded {} transactions as history (skipped: {skipped:?})",
+        txs.len()
+    );
     let current = current_entries(&txs)?;
     let history = History::build(&txs);
     Ok((txs, current, history))
@@ -197,7 +229,11 @@ pub fn call_label(tx: &DecodedTx) -> String {
 }
 
 /// Did the replay on the deployed code reproduce exactly what mainnet recorded?
-pub fn matches_mainnet(tx: &DecodedTx, entries: &[(LedgerKey, LedgerEntry, Option<u32>)], out: &Outcome) -> bool {
+pub fn matches_mainnet(
+    tx: &DecodedTx,
+    entries: &[(LedgerKey, LedgerEntry, Option<u32>)],
+    out: &Outcome,
+) -> bool {
     let expected = recorded_after(tx, entries);
     out.ok
         && out.return_value == tx.return_value
@@ -230,7 +266,11 @@ fn save_deployed_wasm(current: &BTreeMap<LedgerKey, CurrentEntry>) -> Result<()>
         bail!("the contract's code was not found in the saved state");
     };
     fs::write(DEPLOYED_WASM, code.code.to_vec())?;
-    println!("saved the deployed code ({} bytes, hash {}) to {DEPLOYED_WASM}", code.code.len(), hex(&hash.0));
+    println!(
+        "saved the deployed code ({} bytes, hash {}) to {DEPLOYED_WASM}",
+        code.code.len(),
+        hex(&hash.0)
+    );
     Ok(())
 }
 
@@ -284,7 +324,10 @@ pub fn replay_all() -> Result<()> {
         let expected_writes = recorded_after(tx, &entries);
         let r = out.return_value == tx.return_value;
         let ev = out.events == tx.events;
-        let wr_diff = expected_writes.iter().filter(|(k, v)| out.after.get(*k) != v.as_ref()).count();
+        let wr_diff = expected_writes
+            .iter()
+            .filter(|(k, v)| out.after.get(*k) != v.as_ref())
+            .count();
         let wr = wr_diff == 0;
 
         ran_ok += out.ok as usize;

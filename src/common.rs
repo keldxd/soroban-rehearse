@@ -1,10 +1,10 @@
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use base64::Engine;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use soroban_sdk::xdr::{
     ContractEvent, FeeBumpTransactionInnerTx, HostFunction, InvokeContractArgs, LedgerEntryChange,
-    LedgerKey, Limits, OperationBody, ReadXdr, ScVal, Transaction, TransactionEnvelope, TransactionExt,
-    TransactionMeta, WriteXdr,
+    LedgerKey, Limits, OperationBody, ReadXdr, ScVal, Transaction, TransactionEnvelope,
+    TransactionExt, TransactionMeta, WriteXdr,
 };
 use std::collections::BTreeMap;
 use std::fs;
@@ -25,11 +25,14 @@ pub const NETWORK_ID_HEX: &str = "7ac33997544e3175d266bd022439b22cdb16508c01163f
 // ---------------------------------------------------------------- RPC
 
 pub fn rpc_url() -> String {
-    std::env::var("STELLAR_RPC_URL").unwrap_or_else(|_| "https://mainnet.sorobanrpc.com".to_string())
+    std::env::var("STELLAR_RPC_URL")
+        .unwrap_or_else(|_| "https://mainnet.sorobanrpc.com".to_string())
 }
 
 pub fn client() -> Result<reqwest::blocking::Client> {
-    Ok(reqwest::blocking::Client::builder().timeout(std::time::Duration::from_secs(60)).build()?)
+    Ok(reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(60))
+        .build()?)
 }
 
 /// One JSON-RPC call. `params` is left out entirely when it is null.
@@ -48,7 +51,9 @@ pub fn rpc(client: &reqwest::blocking::Client, method: &str, params: Value) -> R
     if let Some(e) = resp.get("error") {
         bail!("{method} returned an error: {e}");
     }
-    resp.get("result").cloned().ok_or_else(|| anyhow!("{method}: no result in response"))
+    resp.get("result")
+        .cloned()
+        .ok_or_else(|| anyhow!("{method}: no result in response"))
 }
 
 // ---------------------------------------------------------------- XDR helpers
@@ -59,7 +64,9 @@ pub fn decode<T: ReadXdr>(b64: &str) -> Result<T> {
 }
 
 pub fn encode<T: WriteXdr>(v: &T) -> Result<String> {
-    let bytes = v.to_xdr(Limits::none()).map_err(|e| anyhow!("XDR encode failed: {e:?}"))?;
+    let bytes = v
+        .to_xdr(Limits::none())
+        .map_err(|e| anyhow!("XDR encode failed: {e:?}"))?;
     Ok(base64::engine::general_purpose::STANDARD.encode(bytes))
 }
 
@@ -127,7 +134,8 @@ fn decode_one(t: &Value) -> Result<DecodedTx> {
         .as_u64()
         .or_else(|| t["createdAt"].as_str().and_then(|s| s.parse().ok()))
         .context("no createdAt")?;
-    let envelope: TransactionEnvelope = decode(t["envelopeXdr"].as_str().context("no envelopeXdr")?)?;
+    let envelope: TransactionEnvelope =
+        decode(t["envelopeXdr"].as_str().context("no envelopeXdr")?)?;
     let meta: TransactionMeta = decode(t["resultMetaXdr"].as_str().context("no resultMetaXdr")?)?;
 
     let tx = inner_tx(&envelope).context("old v0 envelope")?;
@@ -156,9 +164,17 @@ fn decode_one(t: &Value) -> Result<DecodedTx> {
         read_only: data.resources.footprint.read_only.to_vec(),
         read_write: data.resources.footprint.read_write.to_vec(),
         auth_entries: op.auth.len(),
-        changes: m.operations.iter().flat_map(|o| o.changes.iter().cloned()).collect(),
+        changes: m
+            .operations
+            .iter()
+            .flat_map(|o| o.changes.iter().cloned())
+            .collect(),
         return_value: m.soroban_meta.as_ref().and_then(|s| s.return_value.clone()),
-        events: m.operations.iter().flat_map(|o| o.events.iter().cloned()).collect(),
+        events: m
+            .operations
+            .iter()
+            .flat_map(|o| o.events.iter().cloned())
+            .collect(),
     })
 }
 

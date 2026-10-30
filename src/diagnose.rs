@@ -1,8 +1,8 @@
 use crate::common::load_txs;
 use crate::replay::render::{describe_key, event, short, sv, value_text};
 use crate::replay::run_safely;
-use crate::state::{current_entries, recorded_after, state_before, History};
-use anyhow::{bail, Result};
+use crate::state::{History, current_entries, recorded_after, state_before};
+use anyhow::{Result, bail};
 use soroban_sdk::xdr::{LedgerEntryChange, LedgerKey};
 use std::collections::BTreeSet;
 
@@ -43,8 +43,16 @@ pub fn diagnose(hash: &str) -> Result<()> {
     println!("\nfootprint entries absent from the rebuilt state:");
     for k in tx.read_only.iter().chain(tx.read_write.iter()) {
         if !have.contains(k) {
-            let rw = if tx.read_write.contains(k) { "read-write" } else { "read-only" };
-            let why = if created.contains(k) { "created by this tx" } else { "no value found" };
+            let rw = if tx.read_write.contains(k) {
+                "read-write"
+            } else {
+                "read-only"
+            };
+            let why = if created.contains(k) {
+                "created by this tx"
+            } else {
+                "no value found"
+            };
             println!("  [{rw}, {why}] {}", describe_key(k));
         }
     }
@@ -63,11 +71,22 @@ pub fn diagnose(hash: &str) -> Result<()> {
     if let Some(e) = &out.error {
         println!("error: {e}");
     }
-    let show = |v: &Option<soroban_sdk::xdr::ScVal>| v.as_ref().map(sv).unwrap_or_else(|| "none".to_string());
-    println!("return value  replay:   {}", short(show(&out.return_value), 300));
-    println!("return value  recorded: {}", short(show(&tx.return_value), 300));
+    let show = |v: &Option<soroban_sdk::xdr::ScVal>| {
+        v.as_ref().map(sv).unwrap_or_else(|| "none".to_string())
+    };
+    println!(
+        "return value  replay:   {}",
+        short(show(&out.return_value), 300)
+    );
+    println!(
+        "return value  recorded: {}",
+        short(show(&tx.return_value), 300)
+    );
 
-    println!("\nhost error diagnostics ({}), first ones:", out.diagnostics.len());
+    println!(
+        "\nhost error diagnostics ({}), first ones:",
+        out.diagnostics.len()
+    );
     for d in out.diagnostics.iter().take(8) {
         println!("  {}", short(d.clone(), 400));
     }
@@ -77,12 +96,29 @@ pub fn diagnose(hash: &str) -> Result<()> {
         println!("  {}", a.full);
     }
 
-    println!("\nevents: {} in replay, {} recorded", out.events.len(), tx.events.len());
-    let first_diff = (0..out.events.len().max(tx.events.len())).find(|i| out.events.get(*i) != tx.events.get(*i));
+    println!(
+        "\nevents: {} in replay, {} recorded",
+        out.events.len(),
+        tx.events.len()
+    );
+    let first_diff = (0..out.events.len().max(tx.events.len()))
+        .find(|i| out.events.get(*i) != tx.events.get(*i));
     if let Some(i) = first_diff {
         println!("first different event is #{i}");
-        println!("  replay:   {}", out.events.get(i).map(event).unwrap_or_else(|| "none".to_string()));
-        println!("  recorded: {}", tx.events.get(i).map(event).unwrap_or_else(|| "none".to_string()));
+        println!(
+            "  replay:   {}",
+            out.events
+                .get(i)
+                .map(event)
+                .unwrap_or_else(|| "none".to_string())
+        );
+        println!(
+            "  recorded: {}",
+            tx.events
+                .get(i)
+                .map(event)
+                .unwrap_or_else(|| "none".to_string())
+        );
     }
 
     let expected = recorded_after(tx, &entries);
@@ -91,8 +127,16 @@ pub fn diagnose(hash: &str) -> Result<()> {
         let got = out.after.get(k);
         if got != v.as_ref() {
             println!("  {}", describe_key(k));
-            println!("    replay:   {}", got.map(value_text).unwrap_or_else(|| "absent".to_string()));
-            println!("    recorded: {}", v.as_ref().map(value_text).unwrap_or_else(|| "absent".to_string()));
+            println!(
+                "    replay:   {}",
+                got.map(value_text).unwrap_or_else(|| "absent".to_string())
+            );
+            println!(
+                "    recorded: {}",
+                v.as_ref()
+                    .map(value_text)
+                    .unwrap_or_else(|| "absent".to_string())
+            );
         }
     }
     Ok(())

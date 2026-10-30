@@ -5,7 +5,7 @@ mod inspect;
 mod replay;
 mod state;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 
 fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
@@ -13,7 +13,10 @@ fn main() -> Result<()> {
         Some("fetch") => fetch::fetch(),
         Some("inspect") => inspect::inspect(),
         Some("replay") => replay::replay_all(),
-        Some("diagnose") => diagnose::diagnose(args.get(2).context("usage: diagnose <tx hash or its start>")?),
+        Some("diagnose") => diagnose::diagnose(
+            args.get(2)
+                .context("usage: diagnose <tx hash or its start>")?,
+        ),
         _ => bail!("usage: soroban-rehearse fetch | inspect | replay | diagnose <tx hash>"),
     }
 }

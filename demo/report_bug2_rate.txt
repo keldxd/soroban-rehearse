@@ -1,0 +1,82 @@
+loaded 299 transactions as history (skipped: {})
+using saved entries from cache/entries.json (delete it to refresh)
+rehearsing an upgrade of CBAKAZUEJBAFA2DCGBRS2WKJT3FNIMJBHTFL76AY7XMAVEINQNNIQWAO
+new code: blend-builds/pool_bug2_rate.wasm (57213 bytes, hash 676537dd10a25af5d490dbdaf46cbcc81e8722d2a319ed81909afa1eab0e7852)
+replaying the newest 100 real calls on the deployed code and on the new code
+
+==== upgrade rehearsal ====
+real calls replayed:            100
+skipped (needs protocol 29):    17
+host crashed on deployed code:  0
+same behaviour:                 32
+different behaviour:            51  (46 of them on calls whose replay matches mainnet exactly)
+
+findings (calls affected):
+  REVIEW events-changed    26
+  REVIEW return-changed    1
+  REVIEW storage-changed   51
+
+by call (changed / replayed, skipped):
+   41 /  70   skipped   0   a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+    1 /   1   skipped   0   flash_ss on CDFBC7NRQKMKBJHSWPWBBHM3IS3LXVD33TIF3HMQYFB2CXP5KFRWQX4X
+    8 /   8   skipped   0   go on CANTYEEDVUKW4W3MRI6AO2PSH6V575QLIW6WMXAMJ2KD3HKYSGAVN2PB
+    0 /   1   skipped   0   gulp_emissions (Blend pool, direct)
+    0 /   0   skipped  17   run on CDSQUXKEM3PGOB3VNOP25JJB26JUZFQ4DN2GF727HL6UVJC22DWFYZF7
+    1 /   3   skipped   0   submit (Blend pool, direct)
+
+first calls that behave differently:
+
+e20a701b6387e52d  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW events-changed    29 events -> 29; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [24722594, 24629200]
+             new: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [24722594, 24629211]
+  REVIEW storage-changed   CBAKAZ..QWAO Persistent [ResData, CCW67T..MI75]: {b_rate: 1002452348114, b_supply: 770282450941, backstop_credit: 437482335, d_rate: 1003792041998, d_supply: 294758534471, ir_mod: 1746435, last_time: 1793330764} -> {b_rate: 1002452200896, b_supply: 770282450941, backstop_credit: 437453985, d_rate: 1003791561097, d_supply: 294758534471, ir_mod: 1746435, last_time: 1793330764}
+
+2305c76dd4159872  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW events-changed    25 events -> 25; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [32497599, 32374830]
+             new: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [32497599, 32374832]
+  REVIEW storage-changed   CBAKAZ..QWAO Persistent [ResData, CCW67T..MI75]: {b_rate: 1002452376975, b_supply: 770282450941, backstop_credit: 437487893, d_rate: 1003792136278, d_supply: 294758534471, ir_mod: 1743559, last_time: 1793331109} -> {b_rate: 1002452359362, b_supply: 770282450941, backstop_credit: 437484501, d_rate: 1003792078742, d_supply: 294758534471, ir_mod: 1743559, last_time: 1793331109}
+
+c7deace575ba56f3  go on CANTYEEDVUKW4W3MRI6AO2PSH6V575QLIW6WMXAMJ2KD3HKYSGAVN2PB
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW storage-changed   CBAKAZ..QWAO Persistent [ResData, CCW67T..MI75]: {b_rate: 1002452380733, b_supply: 770282450941, backstop_credit: 437488616, d_rate: 1003792148556, d_supply: 294758534471, ir_mod: 1743184, last_time: 1793331154} -> {b_rate: 1002452378439, b_supply: 770282450941, backstop_credit: 437488175, d_rate: 1003792141064, d_supply: 294758534471, ir_mod: 1743184, last_time: 1793331154}
+
+efbc07a1df0064c9  go on CANTYEEDVUKW4W3MRI6AO2PSH6V575QLIW6WMXAMJ2KD3HKYSGAVN2PB
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW storage-changed   CBAKAZ..QWAO Persistent [ResData, CCW67T..MI75]: {b_rate: 1002452383655, b_supply: 770282450941, backstop_credit: 437489179, d_rate: 1003792158104, d_supply: 294758534471, ir_mod: 1742893, last_time: 1793331189} -> {b_rate: 1002452381871, b_supply: 770282450941, backstop_credit: 437488835, d_rate: 1003792152278, d_supply: 294758534471, ir_mod: 1742893, last_time: 1793331189}
+
+abbe1757fcb1e494  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW storage-changed   CBAKAZ..QWAO Persistent [ResData, CCW67T..MI75]: {b_rate: 1002452388246, b_supply: 770282450941, backstop_credit: 437490063, d_rate: 1003792173104, d_supply: 294758534471, ir_mod: 1742435, last_time: 1793331244} -> {b_rate: 1002452385444, b_supply: 770282450941, backstop_credit: 437489523, d_rate: 1003792163951, d_supply: 294758534471, ir_mod: 1742435, last_time: 1793331244}
+
+ff0c603e93806dc6  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code differs from mainnet, lower confidence)
+  REVIEW events-changed    25 events -> 25; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [43091264, 42928471]
+             new: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [43091264, 42928472]
+  REVIEW storage-changed   CBAKAZ..QWAO Persistent [ResData, CCW67T..MI75]: {b_rate: 1002452397844, b_supply: 770282450941, backstop_credit: 437491911, d_rate: 1003792204459, d_supply: 294758534471, ir_mod: 1741477, last_time: 1793331359} -> {b_rate: 1002452391986, b_supply: 770282450941, backstop_credit: 437490783, d_rate: 1003792185325, d_supply: 294758534471, ir_mod: 1741477, last_time: 1793331359}
+
+615ad65a7fd587d6  go on CANTYEEDVUKW4W3MRI6AO2PSH6V575QLIW6WMXAMJ2KD3HKYSGAVN2PB
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW events-changed    23 events -> 23; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, GAWPNB..URSI, CB7D4F..BC76] [11337491, 11294659]
+             new: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, GAWPNB..URSI, CB7D4F..BC76] [11337491, 11294660]
+  REVIEW storage-changed   CBAKAZ..QWAO Persistent [ResData, CCW67T..MI75]: {b_rate: 1002452419115, b_supply: 770282450941, backstop_credit: 437496007, d_rate: 1003792273946, d_supply: 294758534471, ir_mod: 1739352, last_time: 1793331614} -> {b_rate: 1002452406134, b_supply: 770282450941, backstop_credit: 437493507, d_rate: 1003792231541, d_supply: 294758534471, ir_mod: 1739352, last_time: 1793331614}
+
+9a3184b7c5574e38  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code differs from mainnet, lower confidence)
+  REVIEW events-changed    20 events -> 20; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [107719972, 107313008]
+             new: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [107719972, 107313010]
+  REVIEW storage-changed   CBAKAZ..QWAO Persistent [ResData, CCW67T..MI75]: {b_rate: 1002452431613, b_supply: 770282450941, backstop_credit: 437498413, d_rate: 1003792314772, d_supply: 294758534471, ir_mod: 1738102, last_time: 1793331764} -> {b_rate: 1002452423985, b_supply: 770282450941, backstop_credit: 437496945, d_rate: 1003792289858, d_supply: 294758534471, ir_mod: 1738102, last_time: 1793331764}
+
+7328a342abe622dc  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW storage-changed   CBAKAZ..QWAO Persistent [ResData, CCW67T..MI75]: {b_rate: 1002452435776, b_supply: 770282450941, backstop_credit: 437499214, d_rate: 1003792328372, d_supply: 294758534471, ir_mod: 1737686, last_time: 1793331814} -> {b_rate: 1002452433234, b_supply: 770282450941, backstop_credit: 437498725, d_rate: 1003792320073, d_supply: 294758534471, ir_mod: 1737686, last_time: 1793331814}
+
+468fef5c46b38b1b  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW storage-changed   CBAKAZ..QWAO Persistent [ResData, CCW67T..MI75]: {b_rate: 1002452436192, b_supply: 770282450941, backstop_credit: 437499294, d_rate: 1003792329733, d_supply: 294758534471, ir_mod: 1737645, last_time: 1793331819} -> {b_rate: 1002452435937, b_supply: 770282450941, backstop_credit: 437499245, d_rate: 1003792328903, d_supply: 294758534471, ir_mod: 1737645, last_time: 1793331819}

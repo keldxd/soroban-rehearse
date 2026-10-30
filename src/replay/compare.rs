@@ -1,5 +1,7 @@
-use super::render::{describe_key, event, hex, short, sv, value_text, Auth};
-use super::{call_label, is_target_instance, matches_mainnet, prepare, run_safely, Outcome, Upgrade};
+use super::render::{Auth, describe_key, event, hex, short, sv, value_text};
+use super::{
+    Outcome, Upgrade, call_label, is_target_instance, matches_mainnet, prepare, run_safely,
+};
 use crate::common::{CONTRACT, REPLAY_N};
 use crate::state::state_before;
 use anyhow::Result;
@@ -39,12 +41,18 @@ pub fn differences(old: &Outcome, new: &Outcome) -> Vec<Finding> {
         (true, false) => out.push(finding(
             "REVIEW",
             "call-now-fails",
-            format!("worked on the old code, fails on the new: {}", new.error.clone().unwrap_or_default()),
+            format!(
+                "worked on the old code, fails on the new: {}",
+                new.error.clone().unwrap_or_default()
+            ),
         )),
         (false, true) => out.push(finding(
             "REVIEW",
             "call-now-succeeds",
-            format!("failed on the old code ({}), succeeds on the new", old.error.clone().unwrap_or_default()),
+            format!(
+                "failed on the old code ({}), succeeds on the new",
+                old.error.clone().unwrap_or_default()
+            ),
         )),
         (false, false) => {
             if old.error != new.error {
@@ -78,15 +86,26 @@ pub fn differences(old: &Outcome, new: &Outcome) -> Vec<Finding> {
             out.push(finding(
                 "REVIEW",
                 "auth-changed",
-                format!("{} still authorizes {}, but with different arguments or sub-calls", r.signer, r.call),
+                format!(
+                    "{} still authorizes {}, but with different arguments or sub-calls",
+                    r.signer, r.call
+                ),
             ));
         } else {
-            out.push(finding("DANGER", "auth-removed", format!("no longer required: {}", r.full)));
+            out.push(finding(
+                "DANGER",
+                "auth-removed",
+                format!("no longer required: {}", r.full),
+            ));
         }
     }
     for a in &added {
         if !removed.iter().any(|r| same_place(*a, *r)) {
-            out.push(finding("REVIEW", "auth-added", format!("now required: {}", a.full)));
+            out.push(finding(
+                "REVIEW",
+                "auth-added",
+                format!("now required: {}", a.full),
+            ));
         }
     }
 
@@ -96,7 +115,10 @@ pub fn differences(old: &Outcome, new: &Outcome) -> Vec<Finding> {
         out.push(finding(
             "REVIEW",
             "return-changed",
-            short(format!("{} -> {}", show(&old.return_value), show(&new.return_value)), 400),
+            short(
+                format!("{} -> {}", show(&old.return_value), show(&new.return_value)),
+                400,
+            ),
         ));
     }
 
@@ -105,7 +127,9 @@ pub fn differences(old: &Outcome, new: &Outcome) -> Vec<Finding> {
         let i = (0..old.events.len().max(new.events.len()))
             .find(|i| old.events.get(*i) != new.events.get(*i))
             .unwrap_or(0);
-        let show = |e: Option<&soroban_sdk::xdr::ContractEvent>| e.map(event).unwrap_or_else(|| "none".to_string());
+        let show = |e: Option<&soroban_sdk::xdr::ContractEvent>| {
+            e.map(event).unwrap_or_else(|| "none".to_string())
+        };
         out.push(finding(
             "REVIEW",
             "events-changed",
@@ -133,12 +157,21 @@ pub fn differences(old: &Outcome, new: &Outcome) -> Vec<Finding> {
             (Some(a), Some(b)) if a != b => out.push(finding(
                 "REVIEW",
                 "storage-changed",
-                format!("{}: {} -> {}", describe_key(k), value_text(&a), value_text(&b)),
+                format!(
+                    "{}: {} -> {}",
+                    describe_key(k),
+                    value_text(&a),
+                    value_text(&b)
+                ),
             )),
             (None, Some(b)) => out.push(finding(
                 "REVIEW",
                 "storage-added",
-                format!("new code writes an entry the old code did not: {} = {}", describe_key(k), value_text(&b)),
+                format!(
+                    "new code writes an entry the old code did not: {} = {}",
+                    describe_key(k),
+                    value_text(&b)
+                ),
             )),
             (Some(_), None) => out.push(finding(
                 "REVIEW",
@@ -157,8 +190,15 @@ pub fn compare_all(path: &str) -> Result<()> {
     let (txs, current, history) = prepare()?;
     let replay_set = &txs[txs.len().saturating_sub(REPLAY_N)..];
     println!("rehearsing an upgrade of {CONTRACT}");
-    println!("new code: {path} ({} bytes, hash {})", upgrade.wasm.len(), hex(&upgrade.hash));
-    println!("replaying the newest {} real calls on the deployed code and on the new code\n", replay_set.len());
+    println!(
+        "new code: {path} ({} bytes, hash {})",
+        upgrade.wasm.len(),
+        hex(&upgrade.hash)
+    );
+    println!(
+        "replaying the newest {} real calls on the deployed code and on the new code\n",
+        replay_set.len()
+    );
 
     // Panics are caught and reported per transaction
     std::panic::set_hook(Box::new(|_| {}));
@@ -193,7 +233,11 @@ pub fn compare_all(path: &str) -> Result<()> {
 
         let findings = match run_safely(tx, &entries, Some(&upgrade)) {
             Ok(new) => differences(&old, &new),
-            Err(e) => vec![finding("REVIEW", "host-crash", format!("the new code crashed the host: {e}"))],
+            Err(e) => vec![finding(
+                "REVIEW",
+                "host-crash",
+                format!("the new code crashed the host: {e}"),
+            )],
         };
         if findings.is_empty() {
             same += 1;
@@ -203,7 +247,8 @@ pub fn compare_all(path: &str) -> Result<()> {
         changed_verified += verified as usize;
         slot[2] += 1;
 
-        let kinds: BTreeSet<(&'static str, &'static str)> = findings.iter().map(|f| (f.level, f.kind)).collect();
+        let kinds: BTreeSet<(&'static str, &'static str)> =
+            findings.iter().map(|f| (f.level, f.kind)).collect();
         for k in kinds {
             *by_kind.entry(k).or_insert(0) += 1;
         }
@@ -258,4 +303,89 @@ pub fn compare_all(path: &str) -> Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn outcome(auths: Vec<Auth>) -> Outcome {
+        Outcome {
+            ok: true,
+            error: None,
+            return_value: None,
+            events: vec![],
+            after: BTreeMap::new(),
+            auths,
+            diagnostics: vec![],
+        }
+    }
+
+    fn auth(signer: &str, call: &str, args: &str) -> Auth {
+        Auth {
+            signer: signer.into(),
+            call: call.into(),
+            full: format!("{signer} authorizes {call}({args})"),
+        }
+    }
+
+    #[test]
+    fn identical_runs_have_no_findings() {
+        let a = outcome(vec![auth("G1", "P.submit", "1")]);
+        let b = outcome(vec![auth("G1", "P.submit", "1")]);
+        assert!(differences(&a, &b).is_empty());
+    }
+
+    #[test]
+    fn removed_auth_is_danger() {
+        let f = differences(
+            &outcome(vec![auth("G1", "P.submit", "1")]),
+            &outcome(vec![]),
+        );
+        assert_eq!(f.len(), 1);
+        assert_eq!((f[0].level, f[0].kind), ("DANGER", "auth-removed"));
+    }
+
+    #[test]
+    fn changed_auth_arguments_are_review_not_danger() {
+        let f = differences(
+            &outcome(vec![auth("G1", "P.submit", "1")]),
+            &outcome(vec![auth("G1", "P.submit", "2")]),
+        );
+        assert_eq!(f.len(), 1);
+        assert_eq!((f[0].level, f[0].kind), ("REVIEW", "auth-changed"));
+    }
+
+    #[test]
+    fn added_auth_is_review() {
+        let f = differences(
+            &outcome(vec![]),
+            &outcome(vec![auth("G1", "P.submit", "1")]),
+        );
+        assert_eq!(f.len(), 1);
+        assert_eq!((f[0].level, f[0].kind), ("REVIEW", "auth-added"));
+    }
+
+    #[test]
+    fn a_new_failure_is_reported_alone() {
+        let old = outcome(vec![auth("G1", "P.submit", "1")]);
+        let mut new = outcome(vec![]);
+        new.ok = false;
+        new.error = Some("Error(Contract, #1205)".into());
+        let f = differences(&old, &new);
+        assert_eq!(f.len(), 1);
+        assert_eq!(f[0].kind, "call-now-fails");
+    }
+
+    #[test]
+    fn return_value_change_is_reported() {
+        let mut old = outcome(vec![]);
+        let mut new = outcome(vec![]);
+        old.return_value = Some(ScVal::U32(1));
+        new.return_value = Some(ScVal::U32(2));
+        let f = differences(&old, &new);
+        assert_eq!(f.len(), 1);
+        assert_eq!(f[0].kind, "return-changed");
+        assert!(f[0].text.contains("1 -> 2"));
+    }
 }

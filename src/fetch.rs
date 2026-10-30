@@ -1,6 +1,6 @@
-use crate::common::{client, rpc, rpc_url, CACHE, CONTRACT, LEDGERS_PER_DAY, N};
-use anyhow::{bail, Context, Result};
-use serde_json::{json, Value};
+use crate::common::{CACHE, CONTRACT, LEDGERS_PER_DAY, N, client, rpc, rpc_url};
+use anyhow::{Context, Result, bail};
+use serde_json::{Value, json};
 use std::collections::BTreeMap;
 use std::{fs, thread, time::Duration};
 
@@ -8,9 +8,17 @@ pub fn fetch() -> Result<()> {
     let client = client()?;
 
     let health = rpc(&client, "getHealth", Value::Null)?;
-    let latest = health["latestLedger"].as_u64().context("no latestLedger in getHealth")?;
-    let oldest = health["oldestLedger"].as_u64().context("no oldestLedger in getHealth")?;
-    println!("RPC {} remembers ledgers {oldest}..{latest} ({} ledgers)", rpc_url(), latest - oldest);
+    let latest = health["latestLedger"]
+        .as_u64()
+        .context("no latestLedger in getHealth")?;
+    let oldest = health["oldestLedger"]
+        .as_u64()
+        .context("no oldestLedger in getHealth")?;
+    println!(
+        "RPC {} remembers ledgers {oldest}..{latest} ({} ledgers)",
+        rpc_url(),
+        latest - oldest
+    );
 
     let start = latest.saturating_sub(7 * LEDGERS_PER_DAY).max(oldest + 1);
     println!("scanning events of {CONTRACT} from ledger {start}");
@@ -41,7 +49,10 @@ pub fn fetch() -> Result<()> {
         }
         thread::sleep(Duration::from_millis(150));
     }
-    println!("found {} transactions with events from this contract ({pages} pages)", tx_ledger.len());
+    println!(
+        "found {} transactions with events from this contract ({pages} pages)",
+        tx_ledger.len()
+    );
     if tx_ledger.is_empty() {
         bail!("no transactions found; try another RPC with STELLAR_RPC_URL");
     }
@@ -76,7 +87,11 @@ pub fn fetch() -> Result<()> {
 
     let ledgers: Vec<u64> = saved.iter().filter_map(|t| t["ledger"].as_u64()).collect();
     println!("saved {} transactions to {CACHE}", saved.len());
-    println!("ledger range: {:?}..{:?}", ledgers.iter().min(), ledgers.iter().max());
+    println!(
+        "ledger range: {:?}..{:?}",
+        ledgers.iter().min(),
+        ledgers.iter().max()
+    );
     println!("statuses: {statuses:?}");
     Ok(())
 }

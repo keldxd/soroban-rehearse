@@ -1,0 +1,47 @@
+loaded 299 transactions as history (skipped: {})
+using saved entries from cache/entries.json (delete it to refresh)
+rehearsing an upgrade of CBAKAZUEJBAFA2DCGBRS2WKJT3FNIMJBHTFL76AY7XMAVEINQNNIQWAO
+new code: blend-builds/pool_bug1_auth.wasm (57338 bytes, hash f9d90a2467c91dcf00887ba18b567f72ce07bda9b0154eead2a69b2736df971f)
+replaying the newest 100 real calls on the deployed code and on the new code
+
+==== upgrade rehearsal ====
+real calls replayed:            100
+skipped (needs protocol 29):    17
+host crashed on deployed code:  0
+same behaviour:                 80
+different behaviour:            3  (3 of them on calls whose replay matches mainnet exactly)
+
+findings (calls affected):
+  DANGER auth-removed      3
+  REVIEW auth-added        2
+  REVIEW storage-removed   1
+
+by call (changed / replayed, skipped):
+    0 /  70   skipped   0   a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+    0 /   1   skipped   0   flash_ss on CDFBC7NRQKMKBJHSWPWBBHM3IS3LXVD33TIF3HMQYFB2CXP5KFRWQX4X
+    0 /   8   skipped   0   go on CANTYEEDVUKW4W3MRI6AO2PSH6V575QLIW6WMXAMJ2KD3HKYSGAVN2PB
+    0 /   1   skipped   0   gulp_emissions (Blend pool, direct)
+    0 /   0   skipped  17   run on CDSQUXKEM3PGOB3VNOP25JJB26JUZFQ4DN2GF727HL6UVJC22DWFYZF7
+    3 /   3   skipped   0   submit (Blend pool, direct)
+
+DANGER: authorizations the new code no longer asks for:
+  ea5973bc6bcbca92  submit (Blend pool, direct)  no longer required: GD6XSM..5QS5 authorizes CBAKAZ..QWAO.submit(GD6XSM..5QS5, GD6XSM..5QS5, GD6XSM..5QS5, [{address: CAS3J7..OWMA, amount: 1215267010, request_type: 2}) > {CAS3J7..OWMA.transfer(GD6XSM..5QS5, CBAKAZ..QWAO, 1215267010)}
+  f08bb001ddae4caa  submit (Blend pool, direct)  no longer required: GD6XSM..5QS5 authorizes CBAKAZ..QWAO.submit(GD6XSM..5QS5, GD6XSM..5QS5, GD6XSM..5QS5, [{address: CAS3J7..OWMA, amount: 1221344840, request_type: 3})
+  be85de9701dc7f69  submit (Blend pool, direct)  no longer required: GCROWN..BEAR authorizes CBAKAZ..QWAO.submit(GCROWN..BEAR, GCROWN..BEAR, GCROWN..BEAR, [{address: CCW67T..MI75, amount: 1450000000, request_type: 2}) > {CCW67T..MI75.transfer(GCROWN..BEAR, CBAKAZ..QWAO, 1450000000)}
+
+first calls that behave differently:
+
+ea5973bc6bcbca92  submit (Blend pool, direct)
+  (replay of the deployed code matches mainnet exactly)
+  DANGER auth-removed      no longer required: GD6XSM..5QS5 authorizes CBAKAZ..QWAO.submit(GD6XSM..5QS5, GD6XSM..5QS5, GD6XSM..5QS5, [{address: CAS3J7..OWMA, amount: 1215267010, request_type: 2}) > {CAS3J7..OWMA.transfer(GD6XSM..5QS5, CBAKAZ..QWAO, 1215267010)}
+  REVIEW auth-added        now required: GD6XSM..5QS5 authorizes CAS3J7..OWMA.transfer(GD6XSM..5QS5, CBAKAZ..QWAO, 1215267010)
+
+f08bb001ddae4caa  submit (Blend pool, direct)
+  (replay of the deployed code matches mainnet exactly)
+  DANGER auth-removed      no longer required: GD6XSM..5QS5 authorizes CBAKAZ..QWAO.submit(GD6XSM..5QS5, GD6XSM..5QS5, GD6XSM..5QS5, [{address: CAS3J7..OWMA, amount: 1221344840, request_type: 3})
+  REVIEW storage-removed   entry missing after the new code runs: GD6XSM..5QS5 Temporary LedgerKeyNonce(ScNonceKey { nonce: 801925984706572462 })
+
+be85de9701dc7f69  submit (Blend pool, direct)
+  (replay of the deployed code matches mainnet exactly)
+  DANGER auth-removed      no longer required: GCROWN..BEAR authorizes CBAKAZ..QWAO.submit(GCROWN..BEAR, GCROWN..BEAR, GCROWN..BEAR, [{address: CCW67T..MI75, amount: 1450000000, request_type: 2}) > {CCW67T..MI75.transfer(GCROWN..BEAR, CBAKAZ..QWAO, 1450000000)}
+  REVIEW auth-added        now required: GCROWN..BEAR authorizes CCW67T..MI75.transfer(GCROWN..BEAR, CBAKAZ..QWAO, 1450000000)

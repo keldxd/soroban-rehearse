@@ -1,0 +1,20 @@
+loaded 299 transactions as history (skipped: {})
+using saved entries from cache/entries.json (delete it to refresh)
+rehearsing an upgrade of CBAKAZUEJBAFA2DCGBRS2WKJT3FNIMJBHTFL76AY7XMAVEINQNNIQWAO
+new code: blend-builds/pool_clean.wasm (57250 bytes, hash 274d85836c4e9adf8995f9240c6452cb0ce2e4751e1b10baffffdbfb90319ba1)
+replaying the newest 100 real calls on the deployed code and on the new code
+
+==== upgrade rehearsal ====
+real calls replayed:            100
+skipped (needs protocol 29):    17
+host crashed on deployed code:  0
+same behaviour:                 83
+different behaviour:            0  (0 of them on calls whose replay matches mainnet exactly)
+
+by call (changed / replayed, skipped):
+    0 /  70   skipped   0   a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+    0 /   1   skipped   0   flash_ss on CDFBC7NRQKMKBJHSWPWBBHM3IS3LXVD33TIF3HMQYFB2CXP5KFRWQX4X
+    0 /   8   skipped   0   go on CANTYEEDVUKW4W3MRI6AO2PSH6V575QLIW6WMXAMJ2KD3HKYSGAVN2PB
+    0 /   1   skipped   0   gulp_emissions (Blend pool, direct)
+    0 /   0   skipped  17   run on CDSQUXKEM3PGOB3VNOP25JJB26JUZFQ4DN2GF727HL6UVJC22DWFYZF7
+    0 /   3   skipped   0   submit (Blend pool, direct)

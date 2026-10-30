@@ -1,4 +1,4 @@
-use crate::common::{key_kind, load_txs, CONTRACT};
+use crate::common::{CONTRACT, key_kind, load_txs};
 use anyhow::Result;
 use soroban_sdk::xdr::{LedgerEntryChange, LedgerKey};
 use std::collections::{BTreeMap, BTreeSet};
@@ -13,7 +13,11 @@ pub fn inspect() -> Result<()> {
     for t in &txs {
         let target = t.call.contract_address.to_string();
         let func = t.call.function_name.0.to_utf8_string_lossy();
-        let label = if target == CONTRACT { format!("{func} (direct)") } else { format!("{func} on {target}") };
+        let label = if target == CONTRACT {
+            format!("{func} (direct)")
+        } else {
+            format!("{func} on {target}")
+        };
         *calls.entry(label).or_insert(0) += 1;
 
         ro += t.read_only.len();
@@ -54,9 +58,15 @@ pub fn inspect() -> Result<()> {
     for (k, v) in &calls {
         println!("  {v:>3}  {k}");
     }
-    println!("\nfootprint per tx (avg): {:.1} read-only, {:.1} read-write", ro as f64 / n, rw as f64 / n);
+    println!(
+        "\nfootprint per tx (avg): {:.1} read-only, {:.1} read-write",
+        ro as f64 / n,
+        rw as f64 / n
+    );
     println!("footprint entry kinds: {key_kinds:?}");
     println!("auth entries per tx (avg): {:.1}", auth as f64 / n);
-    println!("read-write entries: {with_before} have a before-value, {created_n} newly created, {untouched} no recorded change");
+    println!(
+        "read-write entries: {with_before} have a before-value, {created_n} newly created, {untouched} no recorded change"
+    );
     Ok(())
 }

@@ -1,0 +1,85 @@
+loaded 299 transactions as history (skipped: {})
+using saved entries from cache/entries.json (delete it to refresh)
+rehearsing an upgrade of CBAKAZUEJBAFA2DCGBRS2WKJT3FNIMJBHTFL76AY7XMAVEINQNNIQWAO
+new code: blend-builds/pool_bug3_event.wasm (57139 bytes, hash f6ce8df3d0aeb6c6d1037df11e023221e3c8776f67ddb9679af147374da4d8b8)
+replaying the newest 100 real calls on the deployed code and on the new code
+
+==== upgrade rehearsal ====
+real calls replayed:            100
+skipped (needs protocol 29):    17
+host crashed on deployed code:  0
+same behaviour:                 4
+different behaviour:            79  (73 of them on calls whose replay matches mainnet exactly)
+
+findings (calls affected):
+  REVIEW events-changed    79
+
+by call (changed / replayed, skipped):
+   70 /  70   skipped   0   a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+    1 /   1   skipped   0   flash_ss on CDFBC7NRQKMKBJHSWPWBBHM3IS3LXVD33TIF3HMQYFB2CXP5KFRWQX4X
+    8 /   8   skipped   0   go on CANTYEEDVUKW4W3MRI6AO2PSH6V575QLIW6WMXAMJ2KD3HKYSGAVN2PB
+    0 /   1   skipped   0   gulp_emissions (Blend pool, direct)
+    0 /   0   skipped  17   run on CDSQUXKEM3PGOB3VNOP25JJB26JUZFQ4DN2GF727HL6UVJC22DWFYZF7
+    0 /   3   skipped   0   submit (Blend pool, direct)
+
+first calls that behave differently:
+
+e20a701b6387e52d  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW events-changed    29 events -> 29; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [24722594, 24629200]
+             new: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG] [24722594, 24629200]
+
+667deed308cdef25  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW events-changed    22 events -> 22; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CAS3J7..OWMA, CBLJ6F..3TFG, CBNVK5..PLZ3] [215469377, 215431283]
+             new: CBAKAZ..QWAO [flash_loan, CAS3J7..OWMA, CBLJ6F..3TFG] [215469377, 215431283]
+
+2305c76dd4159872  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW events-changed    25 events -> 25; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [32497599, 32374830]
+             new: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG] [32497599, 32374830]
+
+172668df89d36a52  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW events-changed    29 events -> 29; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CAS3J7..OWMA, CBLJ6F..3TFG, CBNVK5..PLZ3] [146964882, 146938897]
+             new: CBAKAZ..QWAO [flash_loan, CAS3J7..OWMA, CBLJ6F..3TFG] [146964882, 146938897]
+
+c7deace575ba56f3  go on CANTYEEDVUKW4W3MRI6AO2PSH6V575QLIW6WMXAMJ2KD3HKYSGAVN2PB
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW events-changed    23 events -> 23; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, GAWPNB..URSI, CB7D4F..BC76] [8203729, 8172737]
+             new: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, GAWPNB..URSI] [8203729, 8172737]
+
+e3ad729d0b9affc7  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW events-changed    16 events -> 16; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CAS3J7..OWMA, CBLJ6F..3TFG, CBNVK5..PLZ3] [947895735, 947728103]
+             new: CBAKAZ..QWAO [flash_loan, CAS3J7..OWMA, CBLJ6F..3TFG] [947895735, 947728103]
+
+efbc07a1df0064c9  go on CANTYEEDVUKW4W3MRI6AO2PSH6V575QLIW6WMXAMJ2KD3HKYSGAVN2PB
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW events-changed    22 events -> 22; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, GAWPNB..URSI, CB7D4F..BC76] [16009647, 15949166]
+             new: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, GAWPNB..URSI] [16009647, 15949166]
+
+abbe1757fcb1e494  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code matches mainnet exactly)
+  REVIEW events-changed    20 events -> 20; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [20261860, 20185314]
+             new: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG] [20261860, 20185314]
+
+ff0c603e93806dc6  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code differs from mainnet, lower confidence)
+  REVIEW events-changed    25 events -> 25; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG, CBNVK5..PLZ3] [43091264, 42928471]
+             new: CBAKAZ..QWAO [flash_loan, CCW67T..MI75, CBLJ6F..3TFG] [43091264, 42928471]
+
+d33d81df08572243  a on CBLJ6FNASZ2WMYZA3CJFGVUJRBMNAPGXRYJH4JBBI55VCPP3MREH3TFG
+  (replay of the deployed code differs from mainnet, lower confidence)
+  REVIEW events-changed    25 events -> 25; first difference at #1:
+             old: CBAKAZ..QWAO [flash_loan, CAS3J7..OWMA, CBLJ6F..3TFG, CBNVK5..PLZ3] [58738610, 58728206]
+             new: CBAKAZ..QWAO [flash_loan, CAS3J7..OWMA, CBLJ6F..3TFG] [58738610, 58728206]
